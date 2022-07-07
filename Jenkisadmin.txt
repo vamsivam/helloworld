@@ -1,0 +1,31 @@
+pipeline {
+   aget any
+    stages {
+      stage ("git clone") {
+        steps{
+            git credentialsId: 'github', url: 'https://github.com/vamsivam/helloworld.git'            
+        }
+      }
+      stage ("maven build") {
+        steps{
+              sh "mvn clean install package"   
+              sh "mv target/*.war target/myweb.war"         
+        }
+      }       
+      stage ("deploy") {
+        steps{
+            sshagent(['webserver']) {
+                sh """
+                    scp -o ScriptHostKeyChanging"no target/myweb.war ec2-user@172.31.93.7:/home/ec2-user/apache-tomcat-9.0.58/webapps/
+
+                    ssh ec2-user@172.31.93.7 /home/ec2-user/apache-tomcat-9.0.58/bin/shutdown.sh    
+
+                    ssh ec2-user@172.31.93.7 /home/ec2-user/apache-tomcat-9.0.58/bin/startup.sh 
+
+                  """  
+
+            }      
+        }
+      }                
+    }      
+}
